@@ -16,7 +16,9 @@ provider "postgresql" {
 #   email = "good@bad.com"
 # }
 # resource "postgresql_role" "Role" {
-#   name = "TestRole"
+#   name = "TestRole2"
+#   inherit = false
+#   login = false
 # }
 # resource "postgresql_user_role" "UserRole" {
 #   user = postgresql_user.User.name

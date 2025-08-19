@@ -5,6 +5,7 @@ go 1.24
 require (
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.37.0
+	github.com/lib/pq v1.10.9
 )
 
 require (

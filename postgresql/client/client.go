@@ -18,7 +18,7 @@ type Client struct {
 }
 
 func NewClient(host string, port int, database string, username string, password string) (*Client, error) {
-	conn, err := sql.Open("postgres", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", username, password, host, port, database))
+	conn, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s:%d/%s", username, password, host, port, database))
 	if err != nil {
 		return nil, err
 	}
