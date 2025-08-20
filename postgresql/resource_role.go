@@ -31,7 +31,7 @@ func resourceRole() *schema.Resource {
 			"inherit": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Default:  false,
+				Default:  true,
 			},
 		},
 	}
