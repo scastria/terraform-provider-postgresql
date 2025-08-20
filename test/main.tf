@@ -25,6 +25,10 @@ provider "postgresql" {
 #   role = postgresql_role.ParentRole.id
 #   member = postgresql_role.Role.id
 # }
+# resource "postgresql_role_default_role" "DefaultRole" {
+#   role = "MyRole"
+#   default = "TestRole"
+# }
 # resource "postgresql_user_role" "UserRole" {
 #   user = postgresql_user.User.name
 #   role = postgresql_role.Role.name
