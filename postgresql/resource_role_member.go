@@ -58,7 +58,7 @@ func resourceRoleMemberCreate(ctx context.Context, d *schema.ResourceData, m int
 	admin := d.Get("admin").(bool)
 	inherit := d.Get("inherit").(bool)
 	set := d.Get("set").(bool)
-	query, _, err := c.Exec(ctx, "grant \"%s\" to \"%s\" with admin %t, inherit %t, set %t", role, member, admin, inherit, set)
+	query, _, err := c.Exec(ctx, "", "grant \"%s\" to \"%s\" with admin %t, inherit %t, set %t", role, member, admin, inherit, set)
 	if err != nil {
 		d.SetId("")
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
@@ -74,8 +74,12 @@ func resourceRoleMemberRead(ctx context.Context, d *schema.ResourceData, m inter
 	role := tokens[0]
 	member := tokens[1]
 	var admin, inherit, set bool
-	query, row := c.QueryRow(ctx, "select m.admin_option, m.inherit_option, m.set_option from pg_catalog.pg_auth_members m join pg_catalog.pg_roles mr on m.member = mr.oid join pg_catalog.pg_roles r on m.roleid = r.oid where r.rolname = '%s' and mr.rolname = '%s'", role, member)
-	err := row.Scan(&admin, &inherit, &set)
+	query, row, err := c.QueryRow(ctx, "", "select m.admin_option, m.inherit_option, m.set_option from pg_catalog.pg_auth_members m join pg_catalog.pg_roles mr on m.member = mr.oid join pg_catalog.pg_roles r on m.roleid = r.oid where r.rolname = '%s' and mr.rolname = '%s'", role, member)
+	if err != nil {
+		d.SetId("")
+		return diag.FromErr(err)
+	}
+	err = row.Scan(&admin, &inherit, &set)
 	if err != nil {
 		d.SetId("")
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
@@ -97,7 +101,7 @@ func resourceRoleMemberUpdate(ctx context.Context, d *schema.ResourceData, m int
 	admin := d.Get("admin").(bool)
 	inherit := d.Get("inherit").(bool)
 	set := d.Get("set").(bool)
-	query, _, err := c.Exec(ctx, "grant \"%s\" to \"%s\" with admin %t, inherit %t, set %t", role, member, admin, inherit, set)
+	query, _, err := c.Exec(ctx, "", "grant \"%s\" to \"%s\" with admin %t, inherit %t, set %t", role, member, admin, inherit, set)
 	if err != nil {
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
 	}
@@ -110,7 +114,7 @@ func resourceRoleMemberDelete(ctx context.Context, d *schema.ResourceData, m int
 	tokens := strings.Split(d.Id(), ":")
 	role := tokens[0]
 	member := tokens[1]
-	query, _, err := c.Exec(ctx, "revoke \"%s\" from \"%s\"", role, member)
+	query, _, err := c.Exec(ctx, "", "revoke \"%s\" from \"%s\"", role, member)
 	if err != nil {
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
 	}

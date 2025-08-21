@@ -21,10 +21,10 @@ func Provider() *schema.Provider {
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("POSTGRESQL_PORT", 5432),
 			},
-			"database": {
+			"default_database": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("POSTGRESQL_DATABASE", "postgres"),
+				DefaultFunc: schema.EnvDefaultFunc("POSTGRESQL_DEFAULT_DATABASE", "postgres"),
 			},
 			"username": {
 				Type:        schema.TypeString,
@@ -53,12 +53,12 @@ func Provider() *schema.Provider {
 func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	host := d.Get("host").(string)
 	port := d.Get("port").(int)
-	database := d.Get("database").(string)
+	defaultDatabase := d.Get("default_database").(string)
 	username := d.Get("username").(string)
 	password := d.Get("password").(string)
 
 	var diags diag.Diagnostics
-	c, err := client.NewClient(host, port, database, username, password)
+	c, err := client.NewClient(host, port, defaultDatabase, username, password)
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}

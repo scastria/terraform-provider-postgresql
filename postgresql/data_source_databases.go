@@ -27,7 +27,7 @@ func dataSourceDatabases() *schema.Resource {
 func dataSourceDatabasesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*client.Client)
-	query, rows, err := c.Query(ctx, "select datname from pg_catalog.pg_database where datistemplate = false order by datname")
+	query, rows, err := c.Query(ctx, "", "select datname from pg_catalog.pg_database where datistemplate = false order by datname")
 	if err != nil {
 		d.SetId("")
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)

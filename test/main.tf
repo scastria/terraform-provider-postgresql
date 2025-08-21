@@ -39,7 +39,9 @@ provider "postgresql" {
 # }
 # resource "postgresql_role_permission" "RolePermission" {
 #   role = "test"
-#   privilege = "createdb"
+#   privilege = "all privileges"
+#   level = "database"
+#   target = "db_gdc_published"
 # }
 # resource "postgresql_role_permission" "RolePermission2" {
 #   role = "test"

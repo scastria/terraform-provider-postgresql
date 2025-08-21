@@ -39,7 +39,7 @@ func resourceRoleDefaultRoleCreate(ctx context.Context, d *schema.ResourceData, 
 	c := m.(*client.Client)
 	role := d.Get("role").(string)
 	default_role := d.Get("default").(string)
-	query, _, err := c.Exec(ctx, "alter role \"%s\" set role = '%s'", role, default_role)
+	query, _, err := c.Exec(ctx, "", "alter role \"%s\" set role = '%s'", role, default_role)
 	if err != nil {
 		d.SetId("")
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
@@ -53,8 +53,12 @@ func resourceRoleDefaultRoleRead(ctx context.Context, d *schema.ResourceData, m 
 	c := m.(*client.Client)
 	role := d.Id()
 	var rolconfig pq.StringArray
-	query, row := c.QueryRow(ctx, "select rolconfig from pg_catalog.pg_roles where rolname = '%s'", role)
-	err := row.Scan(&rolconfig)
+	query, row, err := c.QueryRow(ctx, "", "select rolconfig from pg_catalog.pg_roles where rolname = '%s'", role)
+	if err != nil {
+		d.SetId("")
+		return diag.FromErr(err)
+	}
+	err = row.Scan(&rolconfig)
 	if err != nil {
 		d.SetId("")
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
@@ -85,7 +89,7 @@ func resourceRoleDefaultRoleUpdate(ctx context.Context, d *schema.ResourceData, 
 	c := m.(*client.Client)
 	role := d.Id()
 	default_role := d.Get("default").(string)
-	query, _, err := c.Exec(ctx, "alter role \"%s\" set role = '%s'", role, default_role)
+	query, _, err := c.Exec(ctx, "", "alter role \"%s\" set role = '%s'", role, default_role)
 	if err != nil {
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
 	}
@@ -96,7 +100,7 @@ func resourceRoleDefaultRoleDelete(ctx context.Context, d *schema.ResourceData, 
 	var diags diag.Diagnostics
 	c := m.(*client.Client)
 	role := d.Id()
-	query, _, err := c.Exec(ctx, "alter role \"%s\" set role = default", role)
+	query, _, err := c.Exec(ctx, "", "alter role \"%s\" set role = default", role)
 	if err != nil {
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
 	}

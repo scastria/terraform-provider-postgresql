@@ -55,7 +55,7 @@ func resourceRoleCreate(ctx context.Context, d *schema.ResourceData, m interface
 	} else {
 		inheritOption = "noinherit"
 	}
-	query, _, err := c.Exec(ctx, "create role \"%s\" with %s %s", name, loginOption, inheritOption)
+	query, _, err := c.Exec(ctx, "", "create role \"%s\" with %s %s", name, loginOption, inheritOption)
 	if err != nil {
 		d.SetId("")
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
@@ -69,8 +69,12 @@ func resourceRoleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	c := m.(*client.Client)
 	name := d.Id()
 	var login, inherit bool
-	query, row := c.QueryRow(ctx, "select rolcanlogin, rolinherit from pg_catalog.pg_roles where rolname = '%s'", name)
-	err := row.Scan(&login, &inherit)
+	query, row, err := c.QueryRow(ctx, "", "select rolcanlogin, rolinherit from pg_catalog.pg_roles where rolname = '%s'", name)
+	if err != nil {
+		d.SetId("")
+		return diag.FromErr(err)
+	}
+	err = row.Scan(&login, &inherit)
 	if err != nil {
 		d.SetId("")
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
@@ -86,7 +90,7 @@ func resourceRoleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 	c := m.(*client.Client)
 	if d.HasChange("name") {
 		oldName, newName := d.GetChange("name")
-		query, _, err := c.Exec(ctx, "alter role \"%s\" rename to \"%s\"", oldName.(string), newName.(string))
+		query, _, err := c.Exec(ctx, "", "alter role \"%s\" rename to \"%s\"", oldName.(string), newName.(string))
 		if err != nil {
 			return diag.Errorf("Error executing query: %s, error: %v", query, err)
 		}
@@ -107,7 +111,7 @@ func resourceRoleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 	} else {
 		inheritOption = "noinherit"
 	}
-	query, _, err := c.Exec(ctx, "alter role \"%s\" with %s %s", name, loginOption, inheritOption)
+	query, _, err := c.Exec(ctx, "", "alter role \"%s\" with %s %s", name, loginOption, inheritOption)
 	if err != nil {
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
 	}
@@ -118,7 +122,7 @@ func resourceRoleDelete(ctx context.Context, d *schema.ResourceData, m interface
 	var diags diag.Diagnostics
 	c := m.(*client.Client)
 	name := d.Id()
-	query, _, err := c.Exec(ctx, "drop role \"%s\"", name)
+	query, _, err := c.Exec(ctx, "", "drop role \"%s\"", name)
 	if err != nil {
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
 	}
