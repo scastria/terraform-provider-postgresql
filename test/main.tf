@@ -38,10 +38,10 @@ provider "postgresql" {
 #   role = postgresql_role.Role.name
 # }
 # resource "postgresql_role_permission" "RolePermission" {
-#   role = postgresql_role.Role.name
-#   privilege = "CREATE"
+#   role = "test"
+#   privilege = "createdb"
 # }
 # resource "postgresql_role_permission" "RolePermission2" {
-#   role = postgresql_role.Role.name
-#   privilege = "GRANT OPTION"
+#   role = "test"
+#   privilege = "createrole"
 # }
