@@ -45,3 +45,10 @@ provider "postgresql" {
 #   role = "test"
 #   privilege = "createrole"
 # }
+
+# data "postgresql_databases" "DBs" {
+# }
+#
+# output "test" {
+#   value = data.postgresql_databases.DBs.names
+# }

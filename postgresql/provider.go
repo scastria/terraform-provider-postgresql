@@ -43,7 +43,9 @@ func Provider() *schema.Provider {
 			"postgresql_role_default_role": resourceRoleDefaultRole(),
 			"postgresql_role_permission":   resourceRolePermission(),
 		},
-		DataSourcesMap:       map[string]*schema.Resource{},
+		DataSourcesMap: map[string]*schema.Resource{
+			"postgresql_databases": dataSourceDatabases(),
+		},
 		ConfigureContextFunc: providerConfigure,
 	}
 }
