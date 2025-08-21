@@ -37,21 +37,22 @@ provider "postgresql" {
 #   user = postgresql_user.User.name
 #   role = postgresql_role.Role.name
 # }
-resource "postgresql_role_permission" "RolePermission" {
-  role = "test"
-  database = "db_gdc_published"
-  privilege = "select"
-  level = "all sequences in schema"
-  target = "sch_pro"
-}
+# resource "postgresql_role_permission" "RolePermission" {
+#   role = "test"
+#   database = "db_gdc_published"
+#   privilege = "select"
+#   level = "all sequences in schema"
+#   target = "sch_pro"
+# }
 # resource "postgresql_role_permission" "RolePermission2" {
 #   role = "test"
 #   privilege = "createrole"
 # }
 
-# data "postgresql_databases" "DBs" {
-# }
-#
-# output "test" {
-#   value = data.postgresql_databases.DBs.names
-# }
+data "postgresql_schemas" "SCHs" {
+  database = "postgres"
+}
+
+output "test" {
+  value = data.postgresql_schemas.SCHs.names
+}
