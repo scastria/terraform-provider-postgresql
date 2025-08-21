@@ -90,7 +90,7 @@ func resourceRolePermission() *schema.Resource {
 				ForceNew:     true,
 				RequiredWith: []string{"target"},
 				Default:      GLOBAL,
-				ValidateFunc: validation.StringInSlice([]string{GLOBAL, DATABASE, DOMAIN, FOREIGN_DATA_WRAPPER, FOREIGN_SERVER, LANGUAGE, LARGE_OBJECT, PARAMETER, SCHEMA, TABLESPACE, TYPE, FUNCTION, PROCEDURE, ROUTINE, ALL_FUNCTIONS, ALL_PROCEDURES, ALL_ROUTINES, SEQUENCE, ALL_SEQUENCES, TABLE, ALL_TABLES}, false),
+				ValidateFunc: validation.StringInSlice([]string{GLOBAL, DATABASE, DOMAIN, FOREIGN_DATA_WRAPPER, FOREIGN_SERVER, LANGUAGE, LARGE_OBJECT, PARAMETER, SCHEMA, TABLESPACE, TYPE, SEQUENCE, ALL_SEQUENCES, FUNCTION, ALL_FUNCTIONS, PROCEDURE, ALL_PROCEDURES, ROUTINE, ALL_ROUTINES, TABLE, ALL_TABLES}, false),
 			},
 			"target": {
 				Type:         schema.TypeString,
@@ -167,7 +167,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		if (privilege == TEMPORARY) && (!hasTemporary) {
 			return false, nil
 		}
-		if (privilege == ALL_PRIVILEGES) && ((!hasTemporary) || (!hasConnect) || (!hasCreate)) {
+		if (privilege == ALL_PRIVILEGES) && ((!hasCreate) || (!hasConnect) || (!hasTemporary)) {
 			return false, nil
 		}
 	} else if level == DOMAIN {
@@ -324,6 +324,179 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		if (privilege == ALL_PRIVILEGES) && (!hasUsage) {
 			return false, nil
 		}
+	} else if level == SEQUENCE {
+		hasPriv, err := hasSequencePrivilege(ctx, c, role, database, privilege, target)
+		if err != nil {
+			return false, err
+		}
+		if !hasPriv {
+			return false, nil
+		}
+	} else if level == ALL_SEQUENCES {
+		// Get all sequences
+		query, rows, err := c.Query(ctx, database, "select sequence_name from information_schema.sequences where sequence_schema = '%s' order by sequence_name", target)
+		if err != nil {
+			return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+		}
+		for rows.Next() {
+			var name string
+			err = rows.Scan(&name)
+			if err != nil {
+				return false, err
+			}
+			hasPriv, err := hasSequencePrivilege(ctx, c, role, database, privilege, fmt.Sprintf("%s.%s", target, name))
+			if err != nil {
+				return false, err
+			}
+			if !hasPriv {
+				return false, nil
+			}
+		}
+	} else if (level == FUNCTION) || (level == PROCEDURE) || (level == ROUTINE) {
+		hasPriv, err := hasFunctionPrivilege(ctx, c, role, database, privilege, target)
+		if err != nil {
+			return false, err
+		}
+		if !hasPriv {
+			return false, nil
+		}
+	} else if (level == ALL_FUNCTIONS) || (level == ALL_PROCEDURES) || (level == ALL_ROUTINES) {
+		// Get all items
+		var inFilter string
+		if level == ALL_FUNCTIONS {
+			inFilter = "'FUNCTION'"
+		} else if level == ALL_PROCEDURES {
+			inFilter = "'PROCEDURE'"
+		} else {
+			inFilter = "'FUNCTION', 'PROCEDURE'"
+		}
+		query, rows, err := c.Query(ctx, database, "select routine_name from information_schema.routines where routine_schema = '%s' and routine_type in (%s) order by routine_name", target, inFilter)
+		if err != nil {
+			return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+		}
+		for rows.Next() {
+			var name string
+			err = rows.Scan(&name)
+			if err != nil {
+				return false, err
+			}
+			hasPriv, err := hasFunctionPrivilege(ctx, c, role, database, privilege, fmt.Sprintf("%s.%s", target, name))
+			if err != nil {
+				return false, err
+			}
+			if !hasPriv {
+				return false, nil
+			}
+		}
+	} else if level == TABLE {
+		hasPriv, err := hasTablePrivilege(ctx, c, role, database, privilege, target)
+		if err != nil {
+			return false, err
+		}
+		if !hasPriv {
+			return false, nil
+		}
+	} else if level == ALL_TABLES {
+		// Get all tables and views
+		query, rows, err := c.Query(ctx, database, "select table_name from information_schema.tables where table_schema = '%s' order by table_name", target)
+		if err != nil {
+			return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+		}
+		for rows.Next() {
+			var name string
+			err = rows.Scan(&name)
+			if err != nil {
+				return false, err
+			}
+			hasPriv, err := hasTablePrivilege(ctx, c, role, database, privilege, fmt.Sprintf("%s.%s", target, name))
+			if err != nil {
+				return false, err
+			}
+			if !hasPriv {
+				return false, nil
+			}
+		}
+	}
+	return true, nil
+}
+
+func hasTablePrivilege(ctx context.Context, c *client.Client, role string, database string, privilege string, table string) (bool, error) {
+	var hasSelect, hasInsert, hasUpdate, hasDelete, hasTruncate, hasReferences, hasTrigger bool
+	query, row, err := c.QueryRow(ctx, database, "select has_table_privilege('%s', '%s', '%s'), has_table_privilege('%s', '%s', '%s'), has_table_privilege('%s', '%s', '%s'), has_table_privilege('%s', '%s', '%s'), has_table_privilege('%s', '%s', '%s'), has_table_privilege('%s', '%s', '%s'), has_table_privilege('%s', '%s', '%s')", role, table, SELECT, role, table, INSERT, role, table, UPDATE, role, table, DELETE, role, table, TRUNCATE, role, table, REFERENCES, role, table, TRIGGER)
+	if err != nil {
+		return false, err
+	}
+	err = row.Scan(&hasSelect, &hasInsert, &hasUpdate, &hasDelete, &hasTruncate, &hasReferences, &hasTrigger)
+	if err != nil {
+		return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+	}
+	if (privilege == SELECT) && (!hasSelect) {
+		return false, nil
+	}
+	if (privilege == INSERT) && (!hasInsert) {
+		return false, nil
+	}
+	if (privilege == UPDATE) && (!hasUpdate) {
+		return false, nil
+	}
+	if (privilege == DELETE) && (!hasDelete) {
+		return false, nil
+	}
+	if (privilege == TRUNCATE) && (!hasTruncate) {
+		return false, nil
+	}
+	if (privilege == REFERENCES) && (!hasReferences) {
+		return false, nil
+	}
+	if (privilege == TRIGGER) && (!hasTrigger) {
+		return false, nil
+	}
+	if (privilege == ALL_PRIVILEGES) && ((!hasSelect) || (!hasInsert) || (!hasUpdate) || (!hasDelete) || (!hasTruncate) || (!hasReferences) || (!hasTrigger)) {
+		return false, nil
+	}
+	return true, nil
+}
+
+func hasFunctionPrivilege(ctx context.Context, c *client.Client, role string, database string, privilege string, function string) (bool, error) {
+	var hasExecute bool
+	query, row, err := c.QueryRow(ctx, database, "select has_function_privilege('%s', '%s', '%s')", role, function, EXECUTE)
+	if err != nil {
+		return false, err
+	}
+	err = row.Scan(&hasExecute)
+	if err != nil {
+		return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+	}
+	if (privilege == EXECUTE) && (!hasExecute) {
+		return false, nil
+	}
+	if (privilege == ALL_PRIVILEGES) && (!hasExecute) {
+		return false, nil
+	}
+	return true, nil
+}
+
+func hasSequencePrivilege(ctx context.Context, c *client.Client, role string, database string, privilege string, sequence string) (bool, error) {
+	var hasUsage, hasSelect, hasUpdate bool
+	query, row, err := c.QueryRow(ctx, database, "select has_sequence_privilege('%s', '%s', '%s'), has_sequence_privilege('%s', '%s', '%s'), has_sequence_privilege('%s', '%s', '%s')", role, sequence, USAGE, role, sequence, SELECT, role, sequence, UPDATE)
+	if err != nil {
+		return false, err
+	}
+	err = row.Scan(&hasUsage, &hasSelect, &hasUpdate)
+	if err != nil {
+		return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+	}
+	if (privilege == USAGE) && (!hasUsage) {
+		return false, nil
+	}
+	if (privilege == SELECT) && (!hasSelect) {
+		return false, nil
+	}
+	if (privilege == UPDATE) && (!hasUpdate) {
+		return false, nil
+	}
+	if (privilege == ALL_PRIVILEGES) && ((!hasUsage) || (!hasSelect) || (!hasUpdate)) {
+		return false, nil
 	}
 	return true, nil
 }
