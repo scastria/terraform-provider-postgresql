@@ -47,6 +47,10 @@ func Provider() *schema.Provider {
 		DataSourcesMap: map[string]*schema.Resource{
 			"postgresql_databases": dataSourceDatabases(),
 			"postgresql_schemas":   dataSourceSchemas(),
+			"postgresql_routines":  dataSourceRoutines(),
+			"postgresql_sequences": dataSourceSequences(),
+			"postgresql_tables":    dataSourceTables(),
+			"postgresql_views":     dataSourceViews(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}

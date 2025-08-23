@@ -48,7 +48,6 @@ provider "postgresql" {
 #   role = "test"
 #   privilege = "createrole"
 # }
-
 # resource "postgresql_role_default_permission" "RoleDefaultPermission" {
 #   role = "aws-db-readers"
 #   privilege = "all privileges"
@@ -56,3 +55,10 @@ provider "postgresql" {
 #   creator = "aws-db-developers"
 #   filter = "public"
 # }
+data "postgresql_views" "RTs" {
+  database = "db_research_published"
+  schema = "sch_api"
+}
+output "test" {
+  value = data.postgresql_views.RTs.names
+}
