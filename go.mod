@@ -6,6 +6,7 @@ require (
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.37.0
 	github.com/lib/pq v1.10.9
+	github.com/sean-/postgresql-acl v0.0.0-20161225120419-d10489e5d217
 )
 
 require (

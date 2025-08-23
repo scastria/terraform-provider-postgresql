@@ -6,7 +6,7 @@ resource "postgresql_role" "Role" {
   name = "MyRole"
 }
 resource "postgresql_role_permission" "example" {
-  role    = postgresql_role.Role.id
+  role    = postgresql_role.Role.name
   privilege  = "select"
   level = "table"
   target = "MyTable"

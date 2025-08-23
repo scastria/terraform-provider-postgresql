@@ -49,10 +49,10 @@ provider "postgresql" {
 #   privilege = "createrole"
 # }
 
-data "postgresql_schemas" "SCHs" {
-  database = "postgres"
-}
-
-output "test" {
-  value = data.postgresql_schemas.SCHs.names
-}
+# resource "postgresql_role_default_permission" "RoleDefaultPermission" {
+#   role = "aws-db-readers"
+#   privilege = "all privileges"
+#   level = "sequences"
+#   creator = "aws-db-developers"
+#   filter = "public"
+# }

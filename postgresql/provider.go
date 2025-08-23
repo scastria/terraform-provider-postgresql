@@ -38,10 +38,11 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"postgresql_role":              resourceRole(),
-			"postgresql_role_member":       resourceRoleMember(),
-			"postgresql_role_default_role": resourceRoleDefaultRole(),
-			"postgresql_role_permission":   resourceRolePermission(),
+			"postgresql_role":                    resourceRole(),
+			"postgresql_role_member":             resourceRoleMember(),
+			"postgresql_role_default_role":       resourceRoleDefaultRole(),
+			"postgresql_role_permission":         resourceRolePermission(),
+			"postgresql_role_default_permission": resourceRoleDefaultPermission(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"postgresql_databases": dataSourceDatabases(),
