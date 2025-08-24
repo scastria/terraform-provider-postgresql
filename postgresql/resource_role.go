@@ -2,6 +2,8 @@ package postgresql
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -77,6 +79,9 @@ func resourceRoleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	err = row.Scan(&login, &inherit)
 	if err != nil {
 		d.SetId("")
+		if errors.Is(err, sql.ErrNoRows) {
+			return diags
+		}
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
 	}
 	d.Set("name", name)

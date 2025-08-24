@@ -2,6 +2,8 @@ package postgresql
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -82,6 +84,9 @@ func resourceRoleMemberRead(ctx context.Context, d *schema.ResourceData, m inter
 	err = row.Scan(&admin, &inherit, &set)
 	if err != nil {
 		d.SetId("")
+		if errors.Is(err, sql.ErrNoRows) {
+			return diags
+		}
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
 	}
 	d.Set("role", role)

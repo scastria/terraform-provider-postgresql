@@ -2,6 +2,8 @@ package postgresql
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -61,6 +63,9 @@ func resourceRoleDefaultRoleRead(ctx context.Context, d *schema.ResourceData, m 
 	err = row.Scan(&rolconfig)
 	if err != nil {
 		d.SetId("")
+		if errors.Is(err, sql.ErrNoRows) {
+			return diags
+		}
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
 	}
 	if rolconfig == nil {

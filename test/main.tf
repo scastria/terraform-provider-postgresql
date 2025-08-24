@@ -37,13 +37,13 @@ provider "postgresql" {
 #   user = postgresql_user.User.name
 #   role = postgresql_role.Role.name
 # }
-# resource "postgresql_role_permission" "RolePermission" {
-#   role = "test"
-#   database = "db_gdc_published"
-#   privilege = "select"
-#   level = "all sequences in schema"
-#   target = "sch_pro"
-# }
+resource "postgresql_role_permission" "RolePermission" {
+  role = "test"
+  database = "prism"
+  privilege = "select"
+  level = "all tables in schema"
+  target = "public"
+}
 # resource "postgresql_role_permission" "RolePermission2" {
 #   role = "test"
 #   privilege = "createrole"
@@ -55,10 +55,18 @@ provider "postgresql" {
 #   creator = "aws-db-developers"
 #   filter = "public"
 # }
-data "postgresql_schemas" "SCHs" {
-  system = true
-  database = "db_research_unpublished"
-}
-output "test" {
-  value = data.postgresql_schemas.SCHs.names
-}
+# data "postgresql_schemas" "SCHs" {
+#   system = true
+#   database = "db_research_unpublished"
+# }
+# output "test" {
+#   value = data.postgresql_schemas.SCHs.names
+# }
+
+# resource "postgresql_role_restriction" "RoleRestriction" {
+#   role = "test"
+#   database = "db_gdc_published"
+#   privilege = "select"
+#   level = "sequence"
+#   target = "sch_pro.tbl_db_scripts_run_log_auto_id_seq"
+# }
