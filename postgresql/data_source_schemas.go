@@ -17,6 +17,11 @@ func dataSourceSchemas() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"system": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
 			"exclude": {
 				Type:     schema.TypeSet,
 				Optional: true,
@@ -39,12 +44,17 @@ func dataSourceSchemasRead(ctx context.Context, d *schema.ResourceData, m interf
 	var diags diag.Diagnostics
 	c := m.(*client.Client)
 	database := d.Get("database").(string)
+	system := d.Get("system").(bool)
+	systemClause := ""
+	if !system {
+		systemClause = "where schema_name not like 'pg_%' and schema_name != 'information_schema'"
+	}
 	exclude, ok := d.GetOk("exclude")
 	excludeSet := schema.NewSet(schema.HashString, []interface{}{})
 	if ok {
 		excludeSet = exclude.(*schema.Set)
 	}
-	query, rows, err := c.Query(ctx, database, "select schema_name from information_schema.schemata order by schema_name")
+	query, rows, err := c.Query(ctx, database, "select schema_name from information_schema.schemata %s order by schema_name", systemClause)
 	if err != nil {
 		d.SetId("")
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)

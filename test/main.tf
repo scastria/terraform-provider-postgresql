@@ -55,12 +55,10 @@ provider "postgresql" {
 #   creator = "aws-db-developers"
 #   filter = "public"
 # }
-data "postgresql_databases" "DBs" {
-  exclude = [
-    "rdsadmin",
-    "postgres"
-  ]
+data "postgresql_schemas" "SCHs" {
+  system = true
+  database = "db_research_unpublished"
 }
 output "test" {
-  value = data.postgresql_databases.DBs.names
+  value = data.postgresql_schemas.SCHs.names
 }

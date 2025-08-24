@@ -6,6 +6,7 @@ data "postgresql_databases" "example" {
 }
 ```
 ## Argument Reference
+* `template` - **(Optional, Boolean)** Whether to include template databases in the result. Defaults to `false`.
 * `exclude` - **(Optional, List of String)** The database names to exclude from the result.
 ## Attribute Reference
 * `id` - **(String)** Fixed value of `databases`

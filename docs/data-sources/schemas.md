@@ -8,6 +8,7 @@ data "postgresql_schemas" "example" {
 ```
 ## Argument Reference
 * `database` - **(Required, String)** The database to retrieve schemas from.
+* `system` - **(Optional, Boolean)** Whether to include internal system schemas in the result. Defaults to `false`.
 * `exclude` - **(Optional, List of String)** The schema names to exclude from the result.
 ## Attribute Reference
 * `id` - **(String)** Same as`database`
