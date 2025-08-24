@@ -9,7 +9,7 @@ resource "postgresql_role_permission" "example" {
   role    = postgresql_role.Role.name
   privilege  = "select"
   level = "table"
-  target = "MyTable"
+  target = "MySchema.MyTable"
 }
 ```
 ## Argument Reference
