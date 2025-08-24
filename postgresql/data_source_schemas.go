@@ -17,6 +17,13 @@ func dataSourceSchemas() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"exclude": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"names": {
 				Type:     schema.TypeSet,
 				Computed: true,
@@ -32,6 +39,11 @@ func dataSourceSchemasRead(ctx context.Context, d *schema.ResourceData, m interf
 	var diags diag.Diagnostics
 	c := m.(*client.Client)
 	database := d.Get("database").(string)
+	exclude, ok := d.GetOk("exclude")
+	excludeSet := schema.NewSet(schema.HashString, []interface{}{})
+	if ok {
+		excludeSet = exclude.(*schema.Set)
+	}
 	query, rows, err := c.Query(ctx, database, "select schema_name from information_schema.schemata order by schema_name")
 	if err != nil {
 		d.SetId("")
@@ -44,6 +56,9 @@ func dataSourceSchemasRead(ctx context.Context, d *schema.ResourceData, m interf
 		if err != nil {
 			d.SetId("")
 			return diag.FromErr(err)
+		}
+		if excludeSet.Contains(name) {
+			continue
 		}
 		names = append(names, name)
 	}

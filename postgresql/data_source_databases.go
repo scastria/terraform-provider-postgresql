@@ -13,6 +13,13 @@ func dataSourceDatabases() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceDatabasesRead,
 		Schema: map[string]*schema.Schema{
+			"exclude": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"names": {
 				Type:     schema.TypeSet,
 				Computed: true,
@@ -27,6 +34,11 @@ func dataSourceDatabases() *schema.Resource {
 func dataSourceDatabasesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*client.Client)
+	exclude, ok := d.GetOk("exclude")
+	excludeSet := schema.NewSet(schema.HashString, []interface{}{})
+	if ok {
+		excludeSet = exclude.(*schema.Set)
+	}
 	query, rows, err := c.Query(ctx, "", "select datname from pg_catalog.pg_database where datistemplate = false order by datname")
 	if err != nil {
 		d.SetId("")
@@ -39,6 +51,9 @@ func dataSourceDatabasesRead(ctx context.Context, d *schema.ResourceData, m inte
 		if err != nil {
 			d.SetId("")
 			return diag.FromErr(err)
+		}
+		if excludeSet.Contains(name) {
+			continue
 		}
 		names = append(names, name)
 	}

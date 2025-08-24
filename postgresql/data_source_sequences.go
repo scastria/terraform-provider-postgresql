@@ -22,6 +22,13 @@ func dataSourceSequences() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"exclude": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"names": {
 				Type:     schema.TypeSet,
 				Computed: true,
@@ -38,6 +45,11 @@ func dataSourceSequencesRead(ctx context.Context, d *schema.ResourceData, m inte
 	c := m.(*client.Client)
 	database := d.Get("database").(string)
 	schemaName := d.Get("schema").(string)
+	exclude, ok := d.GetOk("exclude")
+	excludeSet := schema.NewSet(schema.HashString, []interface{}{})
+	if ok {
+		excludeSet = exclude.(*schema.Set)
+	}
 	query, rows, err := c.Query(ctx, database, "select sequencename from pg_catalog.pg_sequences where schemaname = '%s' order by sequencename", schemaName)
 	if err != nil {
 		d.SetId("")
@@ -50,6 +62,9 @@ func dataSourceSequencesRead(ctx context.Context, d *schema.ResourceData, m inte
 		if err != nil {
 			d.SetId("")
 			return diag.FromErr(err)
+		}
+		if excludeSet.Contains(name) {
+			continue
 		}
 		names = append(names, name)
 	}
