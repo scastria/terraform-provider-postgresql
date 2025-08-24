@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -125,7 +126,21 @@ func resourceRolePermissionCreate(ctx context.Context, d *schema.ResourceData, m
 	return diags
 }
 
+func fixCaseSensitiveIdentifier(identifier string) string {
+	// Check if the string contains uppercase letters
+	hasUppercase := strings.IndexFunc(identifier, unicode.IsUpper) != -1
+	if !hasUppercase {
+		return identifier
+	}
+	tokens := strings.Split(identifier, ".")
+	for i, token := range tokens {
+		tokens[i] = fmt.Sprintf("\"%s\"", token)
+	}
+	return strings.Join(tokens, ".")
+}
+
 func hasPrivilege(ctx context.Context, c *client.Client, role string, database string, privilege string, level string, target string) (bool, error) {
+	targetCaseSensitive := fixCaseSensitiveIdentifier(target)
 	if level == GLOBAL {
 		var super, createdb, createrole, bypass bool
 		query, row, err := c.QueryRow(ctx, "", "select rolsuper, rolcreatedb, rolcreaterole, rolbypassrls from pg_catalog.pg_roles where rolname = '%s'", role)
@@ -150,7 +165,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		}
 	} else if level == DATABASE {
 		var hasCreate, hasConnect, hasTemporary bool
-		query, row, err := c.QueryRow(ctx, "", "select has_database_privilege('%s', '%s', '%s'), has_database_privilege('%s', '%s', '%s'), has_database_privilege('%s', '%s', '%s')", role, target, CREATE, role, target, CONNECT, role, target, TEMPORARY)
+		query, row, err := c.QueryRow(ctx, "", "select has_database_privilege('%s', '%s', '%s'), has_database_privilege('%s', '%s', '%s'), has_database_privilege('%s', '%s', '%s')", role, targetCaseSensitive, CREATE, role, targetCaseSensitive, CONNECT, role, targetCaseSensitive, TEMPORARY)
 		if err != nil {
 			return false, err
 		}
@@ -173,7 +188,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 	} else if level == DOMAIN {
 		var hasUsage bool
 		// domain is a special form of type so use has_type_privilege
-		query, row, err := c.QueryRow(ctx, database, "select has_type_privilege('%s', '%s', '%s')", role, target, USAGE)
+		query, row, err := c.QueryRow(ctx, database, "select has_type_privilege('%s', '%s', '%s')", role, targetCaseSensitive, USAGE)
 		if err != nil {
 			return false, err
 		}
@@ -189,7 +204,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		}
 	} else if level == FOREIGN_DATA_WRAPPER {
 		var hasUsage bool
-		query, row, err := c.QueryRow(ctx, database, "select has_foreign_data_wrapper_privilege('%s', '%s', '%s')", role, target, USAGE)
+		query, row, err := c.QueryRow(ctx, database, "select has_foreign_data_wrapper_privilege('%s', '%s', '%s')", role, targetCaseSensitive, USAGE)
 		if err != nil {
 			return false, err
 		}
@@ -205,7 +220,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		}
 	} else if level == FOREIGN_SERVER {
 		var hasUsage bool
-		query, row, err := c.QueryRow(ctx, database, "select has_server_privilege('%s', '%s', '%s')", role, target, USAGE)
+		query, row, err := c.QueryRow(ctx, database, "select has_server_privilege('%s', '%s', '%s')", role, targetCaseSensitive, USAGE)
 		if err != nil {
 			return false, err
 		}
@@ -221,7 +236,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		}
 	} else if level == LANGUAGE {
 		var hasUsage bool
-		query, row, err := c.QueryRow(ctx, database, "select has_language_privilege('%s', '%s', '%s')", role, target, USAGE)
+		query, row, err := c.QueryRow(ctx, database, "select has_language_privilege('%s', '%s', '%s')", role, targetCaseSensitive, USAGE)
 		if err != nil {
 			return false, err
 		}
@@ -237,7 +252,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		}
 	} else if level == LARGE_OBJECT {
 		var hasSelect, hasUpdate bool
-		query, row, err := c.QueryRow(ctx, database, "select has_large_object_privilege('%s', '%s', '%s'), has_large_object_privilege('%s', '%s', '%s')", role, target, SELECT, role, target, UPDATE)
+		query, row, err := c.QueryRow(ctx, database, "select has_large_object_privilege('%s', '%s', '%s'), has_large_object_privilege('%s', '%s', '%s')", role, targetCaseSensitive, SELECT, role, targetCaseSensitive, UPDATE)
 		if err != nil {
 			return false, err
 		}
@@ -256,7 +271,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		}
 	} else if level == PARAMETER {
 		var hasSet, hasAlter bool
-		query, row, err := c.QueryRow(ctx, database, "select has_parameter_privilege('%s', '%s', '%s'), has_parameter_privilege('%s', '%s', '%s')", role, target, SET, role, target, ALTER_SYSTEM)
+		query, row, err := c.QueryRow(ctx, database, "select has_parameter_privilege('%s', '%s', '%s'), has_parameter_privilege('%s', '%s', '%s')", role, targetCaseSensitive, SET, role, targetCaseSensitive, ALTER_SYSTEM)
 		if err != nil {
 			return false, err
 		}
@@ -275,7 +290,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		}
 	} else if level == SCHEMA {
 		var hasCreate, hasUsage bool
-		query, row, err := c.QueryRow(ctx, database, "select has_schema_privilege('%s', '%s', '%s'), has_schema_privilege('%s', '%s', '%s')", role, target, CREATE, role, target, USAGE)
+		query, row, err := c.QueryRow(ctx, database, "select has_schema_privilege('%s', '%s', '%s'), has_schema_privilege('%s', '%s', '%s')", role, targetCaseSensitive, CREATE, role, targetCaseSensitive, USAGE)
 		if err != nil {
 			return false, err
 		}
@@ -294,7 +309,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		}
 	} else if level == TABLESPACE {
 		var hasCreate bool
-		query, row, err := c.QueryRow(ctx, database, "select has_tablespace_privilege('%s', '%s', '%s')", role, target, CREATE)
+		query, row, err := c.QueryRow(ctx, database, "select has_tablespace_privilege('%s', '%s', '%s')", role, targetCaseSensitive, CREATE)
 		if err != nil {
 			return false, err
 		}
@@ -310,7 +325,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		}
 	} else if level == TYPE {
 		var hasUsage bool
-		query, row, err := c.QueryRow(ctx, database, "select has_type_privilege('%s', '%s', '%s')", role, target, USAGE)
+		query, row, err := c.QueryRow(ctx, database, "select has_type_privilege('%s', '%s', '%s')", role, targetCaseSensitive, USAGE)
 		if err != nil {
 			return false, err
 		}
@@ -421,8 +436,9 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 }
 
 func hasTablePrivilege(ctx context.Context, c *client.Client, role string, database string, privilege string, table string) (bool, error) {
+	tableCaseSensitive := fixCaseSensitiveIdentifier(table)
 	var hasSelect, hasInsert, hasUpdate, hasDelete, hasTruncate, hasReferences, hasTrigger bool
-	query, row, err := c.QueryRow(ctx, database, "select has_table_privilege('%s', '%s', '%s'), has_table_privilege('%s', '%s', '%s'), has_table_privilege('%s', '%s', '%s'), has_table_privilege('%s', '%s', '%s'), has_table_privilege('%s', '%s', '%s'), has_table_privilege('%s', '%s', '%s'), has_table_privilege('%s', '%s', '%s')", role, table, SELECT, role, table, INSERT, role, table, UPDATE, role, table, DELETE, role, table, TRUNCATE, role, table, REFERENCES, role, table, TRIGGER)
+	query, row, err := c.QueryRow(ctx, database, "select has_table_privilege('%s', '%s', '%s'), has_table_privilege('%s', '%s', '%s'), has_table_privilege('%s', '%s', '%s'), has_table_privilege('%s', '%s', '%s'), has_table_privilege('%s', '%s', '%s'), has_table_privilege('%s', '%s', '%s'), has_table_privilege('%s', '%s', '%s')", role, tableCaseSensitive, SELECT, role, tableCaseSensitive, INSERT, role, tableCaseSensitive, UPDATE, role, tableCaseSensitive, DELETE, role, tableCaseSensitive, TRUNCATE, role, tableCaseSensitive, REFERENCES, role, tableCaseSensitive, TRIGGER)
 	if err != nil {
 		return false, err
 	}
@@ -458,8 +474,9 @@ func hasTablePrivilege(ctx context.Context, c *client.Client, role string, datab
 }
 
 func hasFunctionPrivilege(ctx context.Context, c *client.Client, role string, database string, privilege string, function string) (bool, error) {
+	functionCaseSensitive := fixCaseSensitiveIdentifier(function)
 	var hasExecute bool
-	query, row, err := c.QueryRow(ctx, database, "select has_function_privilege('%s', '%s', '%s')", role, function, EXECUTE)
+	query, row, err := c.QueryRow(ctx, database, "select has_function_privilege('%s', '%s', '%s')", role, functionCaseSensitive, EXECUTE)
 	if err != nil {
 		return false, err
 	}
@@ -477,8 +494,9 @@ func hasFunctionPrivilege(ctx context.Context, c *client.Client, role string, da
 }
 
 func hasSequencePrivilege(ctx context.Context, c *client.Client, role string, database string, privilege string, sequence string) (bool, error) {
+	sequenceCaseSensitive := fixCaseSensitiveIdentifier(sequence)
 	var hasUsage, hasSelect, hasUpdate bool
-	query, row, err := c.QueryRow(ctx, database, "select has_sequence_privilege('%s', '%s', '%s'), has_sequence_privilege('%s', '%s', '%s'), has_sequence_privilege('%s', '%s', '%s')", role, sequence, USAGE, role, sequence, SELECT, role, sequence, UPDATE)
+	query, row, err := c.QueryRow(ctx, database, "select has_sequence_privilege('%s', '%s', '%s'), has_sequence_privilege('%s', '%s', '%s'), has_sequence_privilege('%s', '%s', '%s')", role, sequenceCaseSensitive, USAGE, role, sequenceCaseSensitive, SELECT, role, sequenceCaseSensitive, UPDATE)
 	if err != nil {
 		return false, err
 	}
