@@ -149,7 +149,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		}
 		err = row.Scan(&super, &createdb, &createrole, &bypass)
 		if err != nil {
-			return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+			return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 		}
 		if (privilege == SUPERUSER) && (!super) {
 			return false, nil
@@ -171,7 +171,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		}
 		err = row.Scan(&hasCreate, &hasConnect, &hasTemporary)
 		if err != nil {
-			return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+			return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 		}
 		if (privilege == CREATE) && (!hasCreate) {
 			return false, nil
@@ -194,7 +194,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		}
 		err = row.Scan(&hasUsage)
 		if err != nil {
-			return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+			return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 		}
 		if (privilege == USAGE) && (!hasUsage) {
 			return false, nil
@@ -210,7 +210,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		}
 		err = row.Scan(&hasUsage)
 		if err != nil {
-			return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+			return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 		}
 		if (privilege == USAGE) && (!hasUsage) {
 			return false, nil
@@ -226,7 +226,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		}
 		err = row.Scan(&hasUsage)
 		if err != nil {
-			return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+			return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 		}
 		if (privilege == USAGE) && (!hasUsage) {
 			return false, nil
@@ -242,7 +242,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		}
 		err = row.Scan(&hasUsage)
 		if err != nil {
-			return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+			return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 		}
 		if (privilege == USAGE) && (!hasUsage) {
 			return false, nil
@@ -258,7 +258,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		}
 		err = row.Scan(&hasSelect, &hasUpdate)
 		if err != nil {
-			return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+			return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 		}
 		if (privilege == SELECT) && (!hasSelect) {
 			return false, nil
@@ -277,7 +277,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		}
 		err = row.Scan(&hasSet, &hasAlter)
 		if err != nil {
-			return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+			return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 		}
 		if (privilege == SET) && (!hasSet) {
 			return false, nil
@@ -296,7 +296,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		}
 		err = row.Scan(&hasCreate, &hasUsage)
 		if err != nil {
-			return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+			return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 		}
 		if (privilege == CREATE) && (!hasCreate) {
 			return false, nil
@@ -315,7 +315,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		}
 		err = row.Scan(&hasCreate)
 		if err != nil {
-			return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+			return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 		}
 		if (privilege == CREATE) && (!hasCreate) {
 			return false, nil
@@ -331,7 +331,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		}
 		err = row.Scan(&hasUsage)
 		if err != nil {
-			return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+			return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 		}
 		if (privilege == USAGE) && (!hasUsage) {
 			return false, nil
@@ -351,7 +351,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		// Get all sequences
 		query, rows, err := c.Query(ctx, database, "select sequence_name from information_schema.sequences where sequence_schema = '%s' order by sequence_name", target)
 		if err != nil {
-			return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+			return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 		}
 		for rows.Next() {
 			var name string
@@ -387,7 +387,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		}
 		query, rows, err := c.Query(ctx, database, "select routine_name from information_schema.routines where routine_schema = '%s' and routine_type in (%s) order by routine_name", target, inFilter)
 		if err != nil {
-			return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+			return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 		}
 		for rows.Next() {
 			var name string
@@ -415,7 +415,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		// Get all tables and views
 		query, rows, err := c.Query(ctx, database, "select table_name from information_schema.tables where table_schema = '%s' order by table_name", target)
 		if err != nil {
-			return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+			return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 		}
 		for rows.Next() {
 			var name string
@@ -444,7 +444,7 @@ func hasTablePrivilege(ctx context.Context, c *client.Client, role string, datab
 	}
 	err = row.Scan(&hasSelect, &hasInsert, &hasUpdate, &hasDelete, &hasTruncate, &hasReferences, &hasTrigger)
 	if err != nil {
-		return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+		return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 	}
 	if (privilege == SELECT) && (!hasSelect) {
 		return false, nil
@@ -482,7 +482,7 @@ func hasFunctionPrivilege(ctx context.Context, c *client.Client, role string, da
 	}
 	err = row.Scan(&hasExecute)
 	if err != nil {
-		return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+		return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 	}
 	if (privilege == EXECUTE) && (!hasExecute) {
 		return false, nil
@@ -502,7 +502,7 @@ func hasSequencePrivilege(ctx context.Context, c *client.Client, role string, da
 	}
 	err = row.Scan(&hasUsage, &hasSelect, &hasUpdate)
 	if err != nil {
-		return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+		return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 	}
 	if (privilege == USAGE) && (!hasUsage) {
 		return false, nil
@@ -531,6 +531,11 @@ func resourceRolePermissionRead(ctx context.Context, d *schema.ResourceData, m i
 	hasPriv, err := hasPrivilege(ctx, c, role, database, privilege, level, target)
 	if err != nil {
 		d.SetId("")
+		var dneErr *client.DatabaseNotExistError
+		if errors.As(err, &dneErr) {
+			// Database does not exist, so the permission cannot exist
+			return diags
+		}
 		return diag.FromErr(err)
 	}
 	if !hasPriv {

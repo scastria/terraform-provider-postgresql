@@ -15,9 +15,9 @@ provider "postgresql" {
 #   auth_plugin_alias = "RDS"
 #   email = "good@bad.com"
 # }
-# resource "postgresql_role" "Role" {
-#   name = "TestRole"
-# }
+resource "postgresql_role" "Role" {
+  name = "test"
+}
 # resource "postgresql_role" "ParentRole" {
 #   name = "ParentRole"
 # }
@@ -38,8 +38,8 @@ provider "postgresql" {
 #   role = postgresql_role.Role.name
 # }
 resource "postgresql_role_permission" "RolePermission" {
-  role = "test"
-  database = "prism"
+  role = postgresql_role.Role.name
+  database = "shawn"
   privilege = "select"
   level = "all tables in schema"
   target = "public"

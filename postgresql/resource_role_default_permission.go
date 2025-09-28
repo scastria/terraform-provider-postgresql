@@ -129,7 +129,7 @@ func hasDefaultPrivilege(ctx context.Context, c *client.Client, role string, dat
 	}
 	err = row.Scan(&privs)
 	if err != nil {
-		return false, errors.New(fmt.Sprintf("Error executing query: %s, error: %v", query, err))
+		return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 	}
 	if privs == nil {
 		return false, nil
@@ -137,7 +137,7 @@ func hasDefaultPrivilege(ctx context.Context, c *client.Client, role string, dat
 	for _, priv := range privs {
 		acl, err := pgacl.Parse(priv)
 		if err != nil {
-			return false, errors.New(fmt.Sprintf("Error parsing ACL: %s, error: %v", priv, err))
+			return false, fmt.Errorf("Error parsing ACL: %s, error: %w", priv, err)
 		}
 		if acl.Role != pq.QuoteIdentifier(role) {
 			continue
@@ -204,6 +204,11 @@ func resourceRoleDefaultPermissionRead(ctx context.Context, d *schema.ResourceDa
 	hasPriv, err := hasDefaultPrivilege(ctx, c, role, database, privilege, level, creator, filter)
 	if err != nil {
 		d.SetId("")
+		var dneErr *client.DatabaseNotExistError
+		if errors.As(err, &dneErr) {
+			// Database does not exist, so the permission cannot exist
+			return diags
+		}
 		return diag.FromErr(err)
 	}
 	if !hasPriv {

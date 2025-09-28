@@ -18,6 +18,13 @@ type Client struct {
 	conns           map[string]*sql.DB
 	mu              sync.Mutex
 }
+type DatabaseNotExistError struct {
+	Database string
+}
+
+func (e *DatabaseNotExistError) Error() string {
+	return fmt.Sprintf("database %s does not exist", e.Database)
+}
 
 func NewClient(host string, port int, defaultDatabase string, username string, password string) (*Client, error) {
 	c := &Client{
@@ -44,6 +51,11 @@ func (c *Client) GetConn(database string) (*sql.DB, error) {
 	conn, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s:%d/%s", c.username, c.password, c.host, c.port, database))
 	if err != nil {
 		return nil, err
+	}
+	// Verify database exists
+	err = conn.Ping()
+	if err != nil {
+		return nil, &DatabaseNotExistError{Database: database}
 	}
 	c.conns[database] = conn
 	return conn, nil
