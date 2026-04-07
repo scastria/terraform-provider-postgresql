@@ -38,7 +38,7 @@ func NewClient(host string, port int, defaultDatabase string, username string, p
 	return c, nil
 }
 
-func (c *Client) GetConn(database string) (*sql.DB, error) {
+func (c *Client) GetConn(ctx context.Context, database string) (*sql.DB, error) {
 	if database == "" {
 		database = c.defaultDatabase
 	}
@@ -52,6 +52,7 @@ func (c *Client) GetConn(database string) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+	tflog.Error(ctx, fmt.Sprintf("PostgreSQL: OPENED CONNECTION to %s", database))
 	// Verify database exists
 	err = conn.Ping()
 	if err != nil {
@@ -62,7 +63,7 @@ func (c *Client) GetConn(database string) (*sql.DB, error) {
 }
 
 func (c *Client) QueryRow(ctx context.Context, database string, queryTemplate string, args ...any) (string, *sql.Row, error) {
-	conn, err := c.GetConn(database)
+	conn, err := c.GetConn(ctx, database)
 	if err != nil {
 		return "", nil, err
 	}
@@ -72,7 +73,7 @@ func (c *Client) QueryRow(ctx context.Context, database string, queryTemplate st
 }
 
 func (c *Client) Query(ctx context.Context, database string, queryTemplate string, args ...any) (string, *sql.Rows, error) {
-	conn, err := c.GetConn(database)
+	conn, err := c.GetConn(ctx, database)
 	if err != nil {
 		return "", nil, err
 	}
@@ -83,7 +84,7 @@ func (c *Client) Query(ctx context.Context, database string, queryTemplate strin
 }
 
 func (c *Client) Exec(ctx context.Context, database string, queryTemplate string, args ...any) (string, sql.Result, error) {
-	conn, err := c.GetConn(database)
+	conn, err := c.GetConn(ctx, database)
 	if err != nil {
 		return "", nil, err
 	}
