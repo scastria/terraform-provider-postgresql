@@ -353,6 +353,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		if err != nil {
 			return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 		}
+		defer rows.Close()
 		for rows.Next() {
 			var name string
 			err = rows.Scan(&name)
@@ -389,6 +390,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		if err != nil {
 			return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 		}
+		defer rows.Close()
 		for rows.Next() {
 			var name string
 			err = rows.Scan(&name)
@@ -417,6 +419,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		if err != nil {
 			return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 		}
+		defer rows.Close()
 		for rows.Next() {
 			var name string
 			err = rows.Scan(&name)

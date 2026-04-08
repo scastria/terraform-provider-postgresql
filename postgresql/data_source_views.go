@@ -55,6 +55,7 @@ func dataSourceViewsRead(ctx context.Context, d *schema.ResourceData, m interfac
 		d.SetId("")
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
 	}
+	defer rows.Close()
 	names := []string{}
 	for rows.Next() {
 		var name string

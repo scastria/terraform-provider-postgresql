@@ -28,3 +28,5 @@ provider "postgresql" {
 * `default_database` - **(Optional, String)** The default database to connect to when no `database` is specified for database-specific resources. Can be specified via env variable `POSTGRESQL_DEFAULT_DATABASE`. Default: `postgres`.
 * `username` - **(Required, String)** Username to connect to server as. Can be specified via env variable `POSTGRESQL_USERNAME`.
 * `password` - **(Required, String)** Password to connect to server with. Can be specified via env variable `POSTGRESQL_PASSWORD`.
+* `max_open_connections` - **(Optional, Integer)** The maximum number of open connections allowed on the server. Can be specified via env variable `POSTGRESQL_MAX_OPEN_CONNECTIONS`. Default: `0`
+* `max_idle_connections` - **(Optional, Integer)** The maximum number of idle connections allowed on the server. Can be specified via env variable `POSTGRESQL_MAX_IDLE_CONNECTIONS`. Default: `2`

@@ -16,6 +16,7 @@ type Client struct {
 	username           string
 	password           string
 	maxOpenConnections int
+	maxIdleConnections int
 	conns              map[string]*sql.DB
 	mu                 sync.Mutex
 }
@@ -27,7 +28,7 @@ func (e *DatabaseNotExistError) Error() string {
 	return fmt.Sprintf("database %s does not exist", e.Database)
 }
 
-func NewClient(host string, port int, defaultDatabase string, username string, password string, maxOpenConnections int) (*Client, error) {
+func NewClient(host string, port int, defaultDatabase string, username string, password string, maxOpenConnections int, maxIdleConnections int) (*Client, error) {
 	c := &Client{
 		host:               host,
 		port:               port,
@@ -35,6 +36,7 @@ func NewClient(host string, port int, defaultDatabase string, username string, p
 		username:           username,
 		password:           password,
 		maxOpenConnections: maxOpenConnections,
+		maxIdleConnections: maxIdleConnections,
 		conns:              make(map[string]*sql.DB),
 	}
 	return c, nil
@@ -55,6 +57,7 @@ func (c *Client) GetConn(database string) (*sql.DB, error) {
 		return nil, err
 	}
 	conn.SetMaxOpenConns(c.maxOpenConnections)
+	conn.SetMaxIdleConns(c.maxIdleConnections)
 	// Verify database exists
 	err = conn.Ping()
 	if err != nil {
