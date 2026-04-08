@@ -74,6 +74,8 @@ func (c *Client) QueryRow(ctx context.Context, database string, queryTemplate st
 	}
 	query := fmt.Sprintf(queryTemplate, args...)
 	tflog.Info(ctx, "PostgreSQL SQL:", map[string]any{"SQL": query})
+	var stats = conn.Stats()
+	tflog.Error(ctx, "PostgreSQL Stats:", map[string]any{"InUse": stats.InUse, "Idle": stats.Idle, "Open": stats.OpenConnections})
 	return query, conn.QueryRow(query), nil
 }
 
@@ -84,6 +86,8 @@ func (c *Client) Query(ctx context.Context, database string, queryTemplate strin
 	}
 	query := fmt.Sprintf(queryTemplate, args...)
 	tflog.Info(ctx, "PostgreSQL SQL:", map[string]any{"SQL": query})
+	var stats = conn.Stats()
+	tflog.Error(ctx, "PostgreSQL Stats:", map[string]any{"InUse": stats.InUse, "Idle": stats.Idle, "Open": stats.OpenConnections})
 	rows, err := conn.Query(query)
 	return query, rows, err
 }
@@ -95,6 +99,8 @@ func (c *Client) Exec(ctx context.Context, database string, queryTemplate string
 	}
 	query := fmt.Sprintf(queryTemplate, args...)
 	tflog.Info(ctx, "PostgreSQL SQL:", map[string]any{"SQL": query})
+	var stats = conn.Stats()
+	tflog.Error(ctx, "PostgreSQL Stats:", map[string]any{"InUse": stats.InUse, "Idle": stats.Idle, "Open": stats.OpenConnections})
 	result, err := conn.Exec(query)
 	return query, result, err
 }
