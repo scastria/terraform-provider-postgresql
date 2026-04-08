@@ -10,13 +10,14 @@ import (
 )
 
 type Client struct {
-	host            string
-	port            int
-	defaultDatabase string
-	username        string
-	password        string
-	conns           map[string]*sql.DB
-	mu              sync.Mutex
+	host               string
+	port               int
+	defaultDatabase    string
+	username           string
+	password           string
+	maxOpenConnections int
+	conns              map[string]*sql.DB
+	mu                 sync.Mutex
 }
 type DatabaseNotExistError struct {
 	Database string
@@ -26,19 +27,20 @@ func (e *DatabaseNotExistError) Error() string {
 	return fmt.Sprintf("database %s does not exist", e.Database)
 }
 
-func NewClient(host string, port int, defaultDatabase string, username string, password string) (*Client, error) {
+func NewClient(host string, port int, defaultDatabase string, username string, password string, maxOpenConnections int) (*Client, error) {
 	c := &Client{
-		host:            host,
-		port:            port,
-		defaultDatabase: defaultDatabase,
-		username:        username,
-		password:        password,
-		conns:           make(map[string]*sql.DB),
+		host:               host,
+		port:               port,
+		defaultDatabase:    defaultDatabase,
+		username:           username,
+		password:           password,
+		maxOpenConnections: maxOpenConnections,
+		conns:              make(map[string]*sql.DB),
 	}
 	return c, nil
 }
 
-func (c *Client) GetConn(ctx context.Context, database string) (*sql.DB, error) {
+func (c *Client) GetConn(database string) (*sql.DB, error) {
 	if database == "" {
 		database = c.defaultDatabase
 	}
@@ -52,7 +54,7 @@ func (c *Client) GetConn(ctx context.Context, database string) (*sql.DB, error) 
 	if err != nil {
 		return nil, err
 	}
-	tflog.Error(ctx, fmt.Sprintf("PostgreSQL: OPENED CONNECTION to %s", database))
+	conn.SetMaxOpenConns(c.maxOpenConnections)
 	// Verify database exists
 	err = conn.Ping()
 	if err != nil {
@@ -63,7 +65,7 @@ func (c *Client) GetConn(ctx context.Context, database string) (*sql.DB, error) 
 }
 
 func (c *Client) QueryRow(ctx context.Context, database string, queryTemplate string, args ...any) (string, *sql.Row, error) {
-	conn, err := c.GetConn(ctx, database)
+	conn, err := c.GetConn(database)
 	if err != nil {
 		return "", nil, err
 	}
@@ -73,7 +75,7 @@ func (c *Client) QueryRow(ctx context.Context, database string, queryTemplate st
 }
 
 func (c *Client) Query(ctx context.Context, database string, queryTemplate string, args ...any) (string, *sql.Rows, error) {
-	conn, err := c.GetConn(ctx, database)
+	conn, err := c.GetConn(database)
 	if err != nil {
 		return "", nil, err
 	}
@@ -84,7 +86,7 @@ func (c *Client) Query(ctx context.Context, database string, queryTemplate strin
 }
 
 func (c *Client) Exec(ctx context.Context, database string, queryTemplate string, args ...any) (string, sql.Result, error) {
-	conn, err := c.GetConn(ctx, database)
+	conn, err := c.GetConn(database)
 	if err != nil {
 		return "", nil, err
 	}

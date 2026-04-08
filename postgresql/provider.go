@@ -36,6 +36,11 @@ func Provider() *schema.Provider {
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("POSTGRESQL_PASSWORD", nil),
 			},
+			"max_open_connections": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("POSTGRESQL_MAX_OPEN_CONNECTIONS", 0),
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"postgresql_role":                    resourceRole(),
@@ -62,9 +67,10 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	defaultDatabase := d.Get("default_database").(string)
 	username := d.Get("username").(string)
 	password := d.Get("password").(string)
+	maxOpenConnections := d.Get("max_open_connections").(int)
 
 	var diags diag.Diagnostics
-	c, err := client.NewClient(host, port, defaultDatabase, username, password)
+	c, err := client.NewClient(host, port, defaultDatabase, username, password, maxOpenConnections)
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}
