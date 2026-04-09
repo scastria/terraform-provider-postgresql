@@ -60,7 +60,7 @@ func resourceRoleMemberCreate(ctx context.Context, d *schema.ResourceData, m int
 	admin := d.Get("admin").(bool)
 	inherit := d.Get("inherit").(bool)
 	set := d.Get("set").(bool)
-	query, _, err := c.Exec(ctx, "", "grant \"%s\" to \"%s\" with admin %t, inherit %t, set %t", role, member, admin, inherit, set)
+	query, _, err := c.Exec(ctx, "", "resourceRoleMemberCreate", "grant \"%s\" to \"%s\" with admin %t, inherit %t, set %t", role, member, admin, inherit, set)
 	if err != nil {
 		d.SetId("")
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
@@ -106,7 +106,7 @@ func resourceRoleMemberUpdate(ctx context.Context, d *schema.ResourceData, m int
 	admin := d.Get("admin").(bool)
 	inherit := d.Get("inherit").(bool)
 	set := d.Get("set").(bool)
-	query, _, err := c.Exec(ctx, "", "grant \"%s\" to \"%s\" with admin %t, inherit %t, set %t", role, member, admin, inherit, set)
+	query, _, err := c.Exec(ctx, "", "resourceRoleMemberUpdate", "grant \"%s\" to \"%s\" with admin %t, inherit %t, set %t", role, member, admin, inherit, set)
 	if err != nil {
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
 	}
@@ -119,7 +119,7 @@ func resourceRoleMemberDelete(ctx context.Context, d *schema.ResourceData, m int
 	tokens := strings.Split(d.Id(), ":")
 	role := tokens[0]
 	member := tokens[1]
-	query, _, err := c.Exec(ctx, "", "revoke \"%s\" from \"%s\"", role, member)
+	query, _, err := c.Exec(ctx, "", "resourceRoleMemberDelete", "revoke \"%s\" from \"%s\"", role, member)
 	if err != nil {
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
 	}

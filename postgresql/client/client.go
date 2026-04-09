@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"hash/fnv"
 	"sync"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -72,11 +73,11 @@ func (c *Client) QueryRow(ctx context.Context, database string, queryTemplate st
 	if err != nil {
 		return "", nil, err
 	}
-	query := fmt.Sprintf(queryTemplate, args...)
-	tflog.Info(ctx, "PostgreSQL SQL:", map[string]any{"SQL": query})
 	var stats = conn.Stats()
 	tflog.Error(ctx, "PostgreSQL Stats:", map[string]any{"InUse": stats.InUse, "Idle": stats.Idle, "Open": stats.OpenConnections})
-	return query, conn.QueryRow(query), nil
+	query := fmt.Sprintf(queryTemplate, args...)
+	tflog.Info(ctx, "PostgreSQL SQL:", map[string]any{"SQL": query})
+	return query, conn.QueryRowContext(ctx, query), nil
 }
 
 func (c *Client) Query(ctx context.Context, database string, queryTemplate string, args ...any) (string, *sql.Rows, error) {
@@ -84,23 +85,50 @@ func (c *Client) Query(ctx context.Context, database string, queryTemplate strin
 	if err != nil {
 		return "", nil, err
 	}
-	query := fmt.Sprintf(queryTemplate, args...)
-	tflog.Info(ctx, "PostgreSQL SQL:", map[string]any{"SQL": query})
 	var stats = conn.Stats()
 	tflog.Error(ctx, "PostgreSQL Stats:", map[string]any{"InUse": stats.InUse, "Idle": stats.Idle, "Open": stats.OpenConnections})
-	rows, err := conn.Query(query)
+	query := fmt.Sprintf(queryTemplate, args...)
+	tflog.Info(ctx, "PostgreSQL SQL:", map[string]any{"SQL": query})
+	rows, err := conn.QueryContext(ctx, query)
 	return query, rows, err
 }
 
-func (c *Client) Exec(ctx context.Context, database string, queryTemplate string, args ...any) (string, sql.Result, error) {
+func (c *Client) Exec(ctx context.Context, database string, resourceLockName string, queryTemplate string, args ...any) (string, sql.Result, error) {
 	conn, err := c.GetConn(database)
 	if err != nil {
 		return "", nil, err
 	}
-	query := fmt.Sprintf(queryTemplate, args...)
-	tflog.Info(ctx, "PostgreSQL SQL:", map[string]any{"SQL": query})
+	// Obtain lock
+	var tx *sql.Tx = nil
+	if resourceLockName != "" {
+		h := fnv.New64a()
+		h.Write([]byte(resourceLockName))
+		var resourceLockId = int64(h.Sum64())
+		tx, err = conn.BeginTx(ctx, nil)
+		defer tx.Rollback()
+		if err != nil {
+			return "", nil, err
+		}
+		lockQuery := fmt.Sprintf("SELECT pg_advisory_xact_lock(%d)", resourceLockId)
+		tflog.Info(ctx, "PostgreSQL SQL:", map[string]any{"SQL": lockQuery})
+		_, err = tx.ExecContext(ctx, lockQuery)
+		if err != nil {
+			return "", nil, err
+		}
+	}
 	var stats = conn.Stats()
 	tflog.Error(ctx, "PostgreSQL Stats:", map[string]any{"InUse": stats.InUse, "Idle": stats.Idle, "Open": stats.OpenConnections})
-	result, err := conn.Exec(query)
+	query := fmt.Sprintf(queryTemplate, args...)
+	tflog.Info(ctx, "PostgreSQL SQL:", map[string]any{"SQL": query})
+	var result sql.Result
+	if tx != nil {
+		result, err = tx.ExecContext(ctx, query)
+		if err != nil {
+			return "", nil, err
+		}
+		err = tx.Commit()
+	} else {
+		result, err = conn.ExecContext(ctx, query)
+	}
 	return query, result, err
 }

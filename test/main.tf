@@ -9,6 +9,21 @@ terraform {
 provider "postgresql" {
 }
 
+locals {
+  roles = [
+    "TestRole1",
+    "TestRole2",
+    "TestRole3",
+    "TestRole4",
+    "TestRole5",
+    "TestRole6",
+    "TestRole7",
+    "TestRole8",
+    "TestRole9",
+    "TestRole10"
+  ]
+}
+
 # resource "postgresql_user" "User" {
 #   name = "TestUser"
 #   auth_plugin = "AWSAuthenticationPlugin"
@@ -16,7 +31,8 @@ provider "postgresql" {
 #   email = "good@bad.com"
 # }
 resource "postgresql_role" "Role" {
-  name = "test"
+  for_each = toset(local.roles)
+  name = each.key
 }
 # resource "postgresql_role" "ParentRole" {
 #   name = "ParentRole"
@@ -37,13 +53,13 @@ resource "postgresql_role" "Role" {
 #   user = postgresql_user.User.name
 #   role = postgresql_role.Role.name
 # }
-resource "postgresql_role_permission" "RolePermission" {
-  role = postgresql_role.Role.name
-  database = "shawn"
-  privilege = "select"
-  level = "all tables in schema"
-  target = "public"
-}
+# resource "postgresql_role_permission" "RolePermission" {
+#   role = postgresql_role.Role.name
+#   database = "shawn"
+#   privilege = "select"
+#   level = "all tables in schema"
+#   target = "public"
+# }
 # resource "postgresql_role_permission" "RolePermission2" {
 #   role = "test"
 #   privilege = "createrole"

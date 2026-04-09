@@ -87,7 +87,7 @@ func resourceRoleDefaultPermissionCreate(ctx context.Context, d *schema.Resource
 	if filter != "" {
 		filterClause = fmt.Sprintf("in schema %s", filter)
 	}
-	query, _, err := c.Exec(ctx, database, "alter default privileges %s %s grant %s on %s to \"%s\"", creatorClause, filterClause, privilege, level, role)
+	query, _, err := c.Exec(ctx, database, "resourceRoleDefaultPermissionCreate", "alter default privileges %s %s grant %s on %s to \"%s\"", creatorClause, filterClause, privilege, level, role)
 	if err != nil {
 		d.SetId("")
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
@@ -248,7 +248,7 @@ func resourceRoleDefaultPermissionDelete(ctx context.Context, d *schema.Resource
 	if filter != "" {
 		filterClause = fmt.Sprintf("in schema %s", filter)
 	}
-	query, _, err := c.Exec(ctx, database, "alter default privileges %s %s revoke %s on %s from \"%s\"", creatorClause, filterClause, privilege, level, role)
+	query, _, err := c.Exec(ctx, database, "resourceRoleDefaultPermissionDelete", "alter default privileges %s %s revoke %s on %s from \"%s\"", creatorClause, filterClause, privilege, level, role)
 	if err != nil {
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
 	}

@@ -114,9 +114,9 @@ func resourceRolePermissionCreate(ctx context.Context, d *schema.ResourceData, m
 	var query string
 	var err error
 	if level == GLOBAL {
-		query, _, err = c.Exec(ctx, "", "alter role \"%s\" %s", role, privilege)
+		query, _, err = c.Exec(ctx, "", "resourceRolePermissionCreate", "alter role \"%s\" %s", role, privilege)
 	} else {
-		query, _, err = c.Exec(ctx, database, "grant %s on %s %s to \"%s\"", privilege, level, target, role)
+		query, _, err = c.Exec(ctx, database, "resourceRolePermissionCreate", "grant %s on %s %s to \"%s\"", privilege, level, target, role)
 	}
 	if err != nil {
 		d.SetId("")
@@ -569,9 +569,9 @@ func resourceRolePermissionDelete(ctx context.Context, d *schema.ResourceData, m
 	var query string
 	var err error
 	if level == GLOBAL {
-		query, _, err = c.Exec(ctx, "", "alter role \"%s\" %s", role, fmt.Sprintf("no%s", privilege))
+		query, _, err = c.Exec(ctx, "", "resourceRolePermissionDelete", "alter role \"%s\" %s", role, fmt.Sprintf("no%s", privilege))
 	} else {
-		query, _, err = c.Exec(ctx, database, "revoke %s on %s %s from \"%s\"", privilege, level, target, role)
+		query, _, err = c.Exec(ctx, database, "resourceRolePermissionDelete", "revoke %s on %s %s from \"%s\"", privilege, level, target, role)
 	}
 	if err != nil {
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
