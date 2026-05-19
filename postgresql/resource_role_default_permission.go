@@ -12,7 +12,7 @@ import (
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 	"github.com/scastria/terraform-provider-postgresql/postgresql/client"
-	pgacl "github.com/sean-/postgresql-acl"
+	"github.com/scastria/terraform-provider-postgresql/postgresql/pgacl"
 )
 
 const (
