@@ -380,13 +380,13 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 		// Get all items
 		var inFilter string
 		if level == ALL_FUNCTIONS {
-			inFilter = "'FUNCTION'"
+			inFilter = "'f'"
 		} else if level == ALL_PROCEDURES {
-			inFilter = "'PROCEDURE'"
+			inFilter = "'p'"
 		} else {
-			inFilter = "'FUNCTION', 'PROCEDURE'"
+			inFilter = "'f', 'p'"
 		}
-		query, rows, err := c.Query(ctx, database, "select routine_name from information_schema.routines where routine_schema = '%s' and routine_type in (%s) order by routine_name", target, inFilter)
+		query, rows, err := c.Query(ctx, database, "select p.oid::regprocedure sig from pg_proc p join pg_catalog.pg_namespace n on n.oid = p.pronamespace where n.nspname = '%s' and p.prokind in (%s) order by sig", target, inFilter)
 		if err != nil {
 			return false, fmt.Errorf("Error executing query: %s, error: %w", query, err)
 		}
@@ -397,7 +397,7 @@ func hasPrivilege(ctx context.Context, c *client.Client, role string, database s
 			if err != nil {
 				return false, err
 			}
-			hasPriv, err := hasFunctionPrivilege(ctx, c, role, database, privilege, fmt.Sprintf("%s.%s", target, name))
+			hasPriv, err := hasFunctionPrivilege(ctx, c, role, database, privilege, name)
 			if err != nil {
 				return false, err
 			}
