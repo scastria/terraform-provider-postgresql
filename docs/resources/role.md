@@ -10,6 +10,7 @@ resource "postgresql_role" "example" {
 * `name` - **(Required, String)** The name of the role.
 * `login` - **(Optional, Boolean)** Whether this role can perform a login. Default: `false`.
 * `inherit` - **(Optional, Boolean)** Whether this role inherits privileges from roles it is granted by default. Default: `true`.
+* `password` - **(Optional, String, Sensitive)** The password to use for this role if `login` is `true`.
 ## Attribute Reference
 * `id` - **(String)** Same as `name`.
 ## Import

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -35,6 +36,11 @@ func resourceRole() *schema.Resource {
 				Optional: true,
 				Default:  true,
 			},
+			"password": {
+				Type:      schema.TypeString,
+				Optional:  true,
+				Sensitive: true,
+			},
 		},
 	}
 }
@@ -45,6 +51,11 @@ func resourceRoleCreate(ctx context.Context, d *schema.ResourceData, m interface
 	name := d.Get("name").(string)
 	login := d.Get("login").(bool)
 	inherit := d.Get("inherit").(bool)
+	password, ok := d.GetOk("password")
+	passwordStr := ""
+	if ok {
+		passwordStr = password.(string)
+	}
 	loginOption := ""
 	if login {
 		loginOption = "login"
@@ -57,7 +68,11 @@ func resourceRoleCreate(ctx context.Context, d *schema.ResourceData, m interface
 	} else {
 		inheritOption = "noinherit"
 	}
-	query, _, err := c.Exec(ctx, "", "resourceRoleCreate", "create role \"%s\" with %s %s", name, loginOption, inheritOption)
+	passwordOption := ""
+	if passwordStr != "" {
+		passwordOption = fmt.Sprintf("password '%s'", passwordStr)
+	}
+	query, _, err := c.Exec(ctx, "", "resourceRoleCreate", "create role \"%s\" with %s %s %s", name, loginOption, inheritOption, passwordOption)
 	if err != nil {
 		d.SetId("")
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
@@ -104,6 +119,11 @@ func resourceRoleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 	name := d.Id()
 	login := d.Get("login").(bool)
 	inherit := d.Get("inherit").(bool)
+	password, ok := d.GetOk("password")
+	passwordStr := ""
+	if ok {
+		passwordStr = password.(string)
+	}
 	loginOption := ""
 	if login {
 		loginOption = "login"
@@ -116,7 +136,11 @@ func resourceRoleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 	} else {
 		inheritOption = "noinherit"
 	}
-	query, _, err := c.Exec(ctx, "", "resourceRoleUpdate", "alter role \"%s\" with %s %s", name, loginOption, inheritOption)
+	passwordOption := ""
+	if passwordStr != "" {
+		passwordOption = fmt.Sprintf("password '%s'", passwordStr)
+	}
+	query, _, err := c.Exec(ctx, "", "resourceRoleUpdate", "alter role \"%s\" with %s %s %s", name, loginOption, inheritOption, passwordOption)
 	if err != nil {
 		return diag.Errorf("Error executing query: %s, error: %v", query, err)
 	}

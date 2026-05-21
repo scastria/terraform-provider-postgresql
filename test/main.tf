@@ -9,33 +9,35 @@ terraform {
 provider "postgresql" {
 }
 
-locals {
-  roles = [
-    "TestRole1",
-    "TestRole2",
-    "TestRole3",
-    "TestRole4",
-    "TestRole5",
-    "TestRole6",
-    "TestRole7",
-    "TestRole8",
-    "TestRole9",
-    "TestRole10"
-  ]
-}
-
+# locals {
+#   roles = [
+#     "TestRole1",
+#     "TestRole2",
+#     "TestRole3",
+#     "TestRole4",
+#     "TestRole5",
+#     "TestRole6",
+#     "TestRole7",
+#     "TestRole8",
+#     "TestRole9",
+#     "TestRole10"
+#   ]
+# }
+#
 # resource "postgresql_user" "User" {
 #   name = "TestUser"
 #   auth_plugin = "AWSAuthenticationPlugin"
 #   auth_plugin_alias = "RDS"
 #   email = "good@bad.com"
 # }
-resource "postgresql_role" "Role" {
-  for_each = toset(local.roles)
-  name = each.key
-}
+# resource "postgresql_role" "Role" {
+#   for_each = toset(local.roles)
+#   name = each.key
+# }
 # resource "postgresql_role" "ParentRole" {
 #   name = "ParentRole"
+#   login = true
+#   password = "hellothere"
 # }
 # resource "postgresql_role_member" "RoleMember" {
 #   role = postgresql_role.ParentRole.id
