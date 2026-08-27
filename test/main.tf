@@ -9,6 +9,14 @@ terraform {
 provider "postgresql" {
 }
 
+# data "postgresql_role" "Role" {
+#   search_name = "stuff"
+# }
+#
+# output "test" {
+#   value = data.postgresql_role.Role
+# }
+
 # locals {
 #   roles = [
 #     "TestRole1",

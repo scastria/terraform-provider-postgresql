@@ -61,6 +61,7 @@ func Provider() *schema.Provider {
 			"postgresql_sequences": dataSourceSequences(),
 			"postgresql_tables":    dataSourceTables(),
 			"postgresql_views":     dataSourceViews(),
+			"postgresql_role":      dataSourceRole(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
