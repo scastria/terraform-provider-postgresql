@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 	"github.com/scastria/terraform-provider-postgresql/postgresql/client"
 )
@@ -59,6 +60,15 @@ const (
 	CREATE_ROLE    = "createrole"
 	BYPASS_RLS     = "bypassrls"
 )
+
+var notExistErrorCodes = map[pq.ErrorCode]bool{
+	"42P01": true, // undefined_table (tables, views, sequences)
+	"3F000": true, // invalid_schema_name (schemas)
+	"42703": true, // undefined_column (columns)
+	"42883": true, // undefined_function (functions)
+	"42704": true, // undefined_object (indexes, constraints, types, roles)
+	"42P02": true, // undefined_parameter (parameters)
+}
 
 func resourceRolePermission() *schema.Resource {
 	return &schema.Resource{
@@ -535,8 +545,12 @@ func resourceRolePermissionRead(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		d.SetId("")
 		var dneErr *client.DatabaseNotExistError
+		var pqErr *pq.Error
 		if errors.As(err, &dneErr) {
 			// Database does not exist, so the permission cannot exist
+			return diags
+		} else if (errors.As(err, &pqErr)) && (notExistErrorCodes[pqErr.Code]) {
+			// Some object involved in the permission does not exist
 			return diags
 		}
 		return diag.FromErr(err)
